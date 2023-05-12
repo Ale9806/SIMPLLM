@@ -3,6 +3,8 @@ channels:
   - conda-forge
   - defaults
 dependencies:
+  - python ==3.11.3
+  - ipykernel
   - asttokens=2.2.1
   - backcall=0.2.0
   - backports=1.0
