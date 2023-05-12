@@ -137,14 +137,16 @@ def create_mesh_dict(relation_files=['c2023.bin', 'd2023.bin'], verbose=False):
         reg_val = b'MH = (.+)$'
 
     # Create dictionary of MeSH entity names with their UIDs
+    term = None
     for line in mesh:
         meshTerm = re.search(reg_val, line)
         if meshTerm:
             term = meshTerm.group(1)
         meshNumber = re.search(b'UI = (.+)$', line)
         if meshNumber:
-            number = meshNumber.group(1)
-            mesh_ids['MESH::' + number.decode('utf-8')] = term.decode('utf-8')
+            if term is not None:
+              number = meshNumber.group(1)
+              mesh_ids['MESH::' + number.decode('utf-8')] = term.decode('utf-8')
 
   if verbose:
       print(f"\n MeSH Dictionary:\n")
