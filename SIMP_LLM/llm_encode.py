@@ -1,5 +1,6 @@
 
 from transformers import AutoTokenizer, AutoModel
+import torch
 
 def get_batch_token_ids(batch, tokenizer):
     """Map batch to a tensor of ids. The return
@@ -38,8 +39,7 @@ def get_batch_token_ids(batch, tokenizer):
 def batch_iter(dataset_,batch_size):
     return (dataset_[pos:pos +batch_size] for pos in range(0, len(dataset_),batch_size))
 
-
-def get_reps(dataset, model, tokenizer, batchsize=20):
+def get_reps(dataset, model, tokenizer, batchsize=20,device="cpu"):
     """Represent each example in dataset with the final hidden state 
     above the [CLS] token.
 
@@ -63,6 +63,7 @@ def get_reps(dataset, model, tokenizer, batchsize=20):
             #print(batch_list )
             # Encode the batch with get_batch_token_ids:
             encoded_batch = get_batch_token_ids(batch_list, tokenizer)
+            encoded_batch = {key: value.to(device) for key, value in encoded_batch.items()}
 
             # Get the representations from the model, making sure you pay attention to masking:
             model_output = model( encoded_batch['input_ids'], attention_mask=encoded_batch['attention_mask'])
@@ -85,6 +86,10 @@ class EntityEncoder:
         self.device = device
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.model     = AutoModel.from_pretrained(model_name)
+        if self.device is not None:
+            self.model.to(self.device)
+            self.model.eval()
+
 
     @torch.no_grad()
     def __call__(self, value):
