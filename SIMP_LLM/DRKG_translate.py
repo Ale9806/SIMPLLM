@@ -162,6 +162,7 @@ def download_chembl():
       MOLECULE_DICTIONARY.pref_name,
       MOLECULE_DICTIONARY.chebi_par_id
       FROM MOLECULE_DICTIONARY
+      WHERE MOLECULE_DICTIONARY.pref_name IS NOT NULL OR MOLECULE_DICTIONARY.chebi_par_id IS NOT NULL
   """
   df = chembl_downloader.query(sql)
   return df
