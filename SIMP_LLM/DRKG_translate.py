@@ -3,6 +3,7 @@ import pandas as pd
 import chembl_downloader
 import os 
 import re
+import sys
 
 
 ########## String Processing Functions ###################
@@ -14,9 +15,9 @@ def print_head(df:pd.core.frame.DataFrame,n:int=5) -> None:
 
 
 
-def  read_tsv(relation_file:str,verbose:bool=False):
+def  read_tsv(relation_file:str,verbose:bool=False, **kwargs):
   """ Read glossary """ 
-  df = pd.read_csv(relation_file, sep="\t",engine="pyarrow")
+  df = pd.read_csv(relation_file, sep="\t",engine="pyarrow", **kwargs)
 
   if verbose:
     print(f"\n {relation_file}  Dataframe:\n")
@@ -51,19 +52,20 @@ def process_hetionet(df, verbose=False):
   return df_updated
 
 
-def process_gene_ID(df, verbose=False):
+def read_and_process_gene_ID(relation_file=os.path.join("data", "Homo_sapiens.gene_info"), verbose=False):
   """  
   Process Gene ID lookup table in the following ways:
   - Filter to type = symbol (exclude synonym duplicates)
   - Add "Gene::" in front of Gene ID to match DRKG format
   - Add "gene" after gene types
   """
-
-  df_updated = df[df['type']=='symbol'].drop_duplicates(subset='GeneID').copy()
-  df_updated['symbol'] = df_updated['symbol'].astype(str) + ' gene'
+  df = read_tsv(relation_file, usecols=['GeneID', 'description', 'Symbol'])
+  df_updated = df.rename(columns={"Symbol": "symbol"})
+  df_updated['description'] = df_updated['description'].astype(
+      str) + (' (' + df_updated['symbol'].astype(str) + ')')
   df_updated['GeneID'] = "Gene::" + df_updated['GeneID'].astype(str)
-  df_updated = df_updated.drop(columns=['type'])
-  
+  df_updated = df_updated.drop(columns=['symbol'])
+
   if verbose:
     print(f"\n Gene ID Dataframe (After processing):\n")
     print_head(df_updated)
@@ -199,8 +201,7 @@ def load_lookups(data_path,verbose=False):
     hetionet_df_raw   =  read_tsv(os.path.join(data_path,'hetionet-v1.0-nodes.tsv'),verbose=verbose)    # Read relationship mapping
     hetionet_df       =  process_hetionet(df=hetionet_df_raw, verbose=verbose)    # Process entity names for clarity (e.g., F8 -> Gene F8) 
 
-    gene_df_raw       =  read_tsv( os.path.join(data_path,'symbols-human.tsv'),verbose=verbose)     # Read and process Gene IDs
-    gene_df           =  process_gene_ID(gene_df_raw, verbose=verbose)                 
+    gene_df           =  read_and_process_gene_ID(verbose=verbose)                 
 
     drugbank_df       =  read_and_process_drugbank(os.path.join(data_path,'drugbank vocabulary.csv'), verbose=verbose) # Read and process DrugBank IDs
 
@@ -212,3 +213,9 @@ def load_lookups(data_path,verbose=False):
     chebi_df, chembl_df = process_chebi_chembl(os.path.join(data_path,'compounds.tsv.gz'), chembl_df_raw, verbose=verbose) # Import and process ChEBI and ChEMBL molecule databases
 
     return hetionet_df, gene_df, drugbank_df, omim_df, mesh_dict, chebi_df, chembl_df
+
+if __name__ == "__main__":
+   data_path = sys.argv[1] if len(sys.argv) > 1 else "data/"
+   dfs = load_lookups(data_path)
+   for df in dfs:
+      print(df.head(5))
