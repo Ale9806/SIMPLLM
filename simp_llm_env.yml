@@ -123,4 +123,3 @@ dependencies:
       - typer==0.9.0
       - tzdata==2023.3
       - urllib3==2.0.2
-prefix: C:\Users\aleja\miniconda3\envs\simp_llm
