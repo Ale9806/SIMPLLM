@@ -14,8 +14,8 @@ def get_unique_entities(df:pd.core.frame.DataFrame, columns):
   return entity_list
 
 
-def get_entity_lookup(drkg_entities, node_dict):
-    """Converts list of unique DRKG entities to entity table with the following items, using the lookup table dictionary node_dict:
+def get_entity_lookup(drkg_entities, code_dict):
+    """Converts list of unique DRKG entities to entity table with the following items, using the lookup table dictionary code_dict:
         'drkg_id':       original entity code in DRKG
         'drkg_dict_id':  original entity code, except with entity name in MeSH entity codes removed to match with MeSH lookup format
         'name':          natural language entity name, translated using node_dict dictionary
@@ -35,7 +35,7 @@ def get_entity_lookup(drkg_entities, node_dict):
     drkg_entity_df['drkg_dict_id'] = drkg_entity_df['drkg_id'].str.replace(r'.*?MESH:', "MESH::", regex=True)
 
     # Map entity natural language name
-    drkg_entity_df['name'] = drkg_entity_df['drkg_dict_id'].map(node_dict)
+    drkg_entity_df['name'] = drkg_entity_df['drkg_dict_id'].map(code_dict)
 
     # Get ontology name and code if available
     drkg_entity_df[['entity_type', 'ontology_code']] = drkg_entity_df['drkg_id'].str.split("::", expand=True)
