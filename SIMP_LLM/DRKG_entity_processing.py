@@ -66,6 +66,16 @@ def get_entity_lookup(drkg_entities, node_dict):
     return drkg_entity_df, drkg_unmatched 
 
 
+def OLD_convert_entitynames(df, col, code_dict):
+  """Keeping here for reference: Convert entity codes to names in specified column based on dictionary with additional cleaning"""
+  df_update = df.copy()
+  df_update[col] = df_update[col].str.replace(r'.*?MESH:', "MESH::", regex=True) # Remove MeSH labeling
+  df_update[col] = df_update[col].map(code_dict).fillna(df_update[col])    # Translate dictionary
+  df_update[col] = df_update[col].str.replace("Gene::", "Gene ID ") # For remaining uncoverted Gene IDs, remove "::"
+  df_update[col] = df_update[col].str.replace("Disease::", "") # For remaining diseases (appears to be just SARS-COVID related names), remove label
+  return df_update
+
+
 def convert_entitynames(df, col, node_dict):
   """Convert entity codes to names in specified column based on dictionary"""
   df_update = df.copy()
