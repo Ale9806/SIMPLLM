@@ -50,6 +50,7 @@ def embed_nodes(df, encoders=None, **kwargs):
     '''
     Embeds values of dataframe and creates mapping using specified encoder.
     Equivalent to load_node_csv() here: https://pytorch-geometric.readthedocs.io/en/latest/tutorial/load_csv.html
+    THIS MAY BE OBSOLETE
     '''
     mapping = {index: i for i, index in enumerate(df.index.unique())}
 
@@ -63,6 +64,9 @@ def embed_nodes(df, encoders=None, **kwargs):
 
 
 def create_edges(df, src_index_col, src_mapping, dst_index_col, dst_mapping,edge_attr=None):
+    '''
+    THIS MAY BE OBSOLETE
+    '''
     src        = [src_mapping[index] for index in df[src_index_col]]
     dst        = [dst_mapping[index] for index in df[dst_index_col]]
     edge_index = torch.tensor([src, dst])
@@ -72,4 +76,18 @@ def create_edges(df, src_index_col, src_mapping, dst_index_col, dst_mapping,edge
 
     return edge_index,edge_attr
         
+
+def embed_entities(entity_df, graph_obj, Encoder, device):
+    '''Embeds entities, inputs embeddings directly into Heterograph object, and returns mapping dictionary (which is a dictionary of dictionaries) by entity type'''
+    
+    entity_lookup = entity_df.copy()
+    mapping_dict = {}
+
+    for entity in entity_lookup['entity_type'].unique():                                        # For each entity type
+        entity_names = entity_lookup.loc[entity_lookup['entity_type'] == entity, 'name']        # Get entity names associated with entity type
+        entity_X, entity_mapping = create_mapping(entity_names, encoder=Encoder, device=device) # Maps entities to indices
+        graph_obj[entity].x = entity_X                                                          # Assign entity type embeddings to graph object
+        mapping_dict[entity] = entity_mapping                                                   # Add entity type mapping to overall mapping dictionary
+    
+    return mapping_dict
 
