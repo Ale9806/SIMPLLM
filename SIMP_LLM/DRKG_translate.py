@@ -1,5 +1,6 @@
 import tabulate
 import pandas as pd
+import numpy as np
 import chembl_downloader
 import os 
 import re
@@ -224,8 +225,8 @@ if __name__ == "__main__":
   
 ########## DRKG entity and relationship processing ###################
 def get_unique_entities(df:pd.core.frame.DataFrame, columns):
-  '''Append all unique entries in specified list of columns in dataframe and get unique entities
-  '''
+  """Append all unique entries in specified list of columns in dataframe and get unique entities
+  """
   entity_list = []
   for col in columns:
     entity_list = np.append(entity_list, df[col])
@@ -234,7 +235,7 @@ def get_unique_entities(df:pd.core.frame.DataFrame, columns):
 
 
 def get_entity_lookup(drkg_entities, node_dict):
-    '''Converts list of unique DRKG entities to entity table with the following items, using the lookup table dictionary node_dict:
+    """Converts list of unique DRKG entities to entity table with the following items, using the lookup table dictionary node_dict:
         'drkg_id':       original entity code in DRKG
         'drkg_dict_id':  original entity code, except with entity name in MeSH entity codes removed to match with MeSH lookup format
         'name':          natural language entity name, translated using node_dict dictionary
@@ -247,7 +248,7 @@ def get_entity_lookup(drkg_entities, node_dict):
     * Manual processing of entity and ontology names where the name or source was inferred from the code/ID
     * Remove irrelevant entries (taxonomy and entries with only an entity type but no associated code such as "Gene::")
     * Remove entities with no name and return them as a separate dataframe
-    '''
+    """
     drkg_entity_df = pd.DataFrame(drkg_entities, columns=['drkg_id'])
 
     # Create copy of DRKG ID value that simplifies MeSH codes
@@ -286,7 +287,7 @@ def get_entity_lookup(drkg_entities, node_dict):
 
 
 def convert_entitynames(df, col, node_dict):
-  '''Convert entity codes to names in specified column based on dictionary'''
+  """Convert entity codes to names in specified column based on dictionary"""
   df_update = df.copy()
   df_update[col] = df_update[col].map(node_dict)    # Translate dictionary, dont replace NAs
   return df_update
