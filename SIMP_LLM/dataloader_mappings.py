@@ -100,38 +100,45 @@ def embed_edges(hrt_data, relation_lookup, graph_obj, mapping_dict, encoder, dev
     Returns relation tensor and mapping while directly embedding graph.
     '''
     # Create mapping for relations
-    relation_name_list = relation_lookup['relation_name'].unique()
+    relation_lookup_subset = relation_lookup[relation_lookup['drkg_id'].isin(hrt_data[1])]  # Only use relations that are in the hrt data
+    relation_name_list = relation_lookup_subset['relation_name'].unique()  # Only use relations that are in the hrt data
     relation_X, relation_mapping = create_mapping(relation_name_list,encoder=encoder,device=device)  
 
-    for relation_name in relation_name_list:
-        # Get relation codes associated with relation type and filter knowledge graph to associated relation codes
-        relation_subset = relation_lookup[relation_lookup['relation_name'] == relation_name]  
-        hrt_subset = hrt_data[hrt_data[1].isin(relation_subset['drkg_id'])]   
+    # By entity-entity pair
+    for ent_types in relation_lookup_subset['Connected entity-types'].unique():
+        relation_lookup_sub_subset = relation_lookup_subset[relation_lookup_subset['Connected entity-types'] == ent_types]
 
-        # If no entries in translated DRKG for relation name, continue
-        if len(hrt_subset) == 0:
-            continue
+        # By relation name within entity-entity pair (since relation names can be common across different pairs)
+        for relation_name in relation_lookup_sub_subset['relation_name'].unique():
+            # Get relation codes associated with relation type and filter knowledge graph to associated relation codes
 
-        # Get head and tail entity types from data
-        head_entity = relation_subset['head_entity'].unique()
-        tail_entity = relation_subset['tail_entity'].unique()
+            relation_subset = relation_lookup_sub_subset[relation_lookup_sub_subset['relation_name'] == relation_name]  
+            hrt_subset = hrt_data[hrt_data[1].isin(relation_subset['drkg_id'])]   
 
-        if len(head_entity) > 1 or len(tail_entity) > 1:
-            raise Exception(f"Multiple types of entities for the following relationship: {relation_name}")
-        
-        head_entity = head_entity[0]
-        tail_entity = tail_entity[0]
-        
-        # Create edge attributes for graph
-        relation_feature = relation_X[relation_mapping[relation_name],:].reshape(1,-1)
-        Edge_index,edge_attribute = create_edges(df            = hrt_subset,
-                                                src_index_col  = 0, 
-                                                src_mapping    = mapping_dict[head_entity] , 
-                                                dst_index_col  = 2, 
-                                                dst_mapping    = mapping_dict[tail_entity] ,
-                                                edge_attr      = relation_feature)
+            # If no entries in translated DRKG for relation name, continue
+            if len(hrt_subset) == 0:
+                continue
 
-        graph_obj[head_entity, relation_name, tail_entity].edge_index = Edge_index
-        graph_obj[head_entity, relation_name, tail_entity].edge_label = edge_attribute 
+            # Get head and tail entity types from data
+            head_entity = relation_subset['head_entity'].unique()
+            tail_entity = relation_subset['tail_entity'].unique()
+
+            if len(head_entity) > 1 or len(tail_entity) > 1:
+                raise Exception(f"Multiple types of entities for the following relationship: {relation_name}")
+            
+            head_entity = head_entity[0]
+            tail_entity = tail_entity[0]
+            
+            # Create edge attributes for graph
+            relation_feature = relation_X[relation_mapping[relation_name],:].reshape(1,-1)
+            Edge_index,edge_attribute = create_edges(df            = hrt_subset,
+                                                    src_index_col  = 0, 
+                                                    src_mapping    = mapping_dict[head_entity] , 
+                                                    dst_index_col  = 2, 
+                                                    dst_mapping    = mapping_dict[tail_entity] ,
+                                                    edge_attr      = relation_feature)
+
+            graph_obj[head_entity, relation_name, tail_entity].edge_index = Edge_index
+            graph_obj[head_entity, relation_name, tail_entity].edge_label = edge_attribute 
 
     return relation_X, relation_mapping
