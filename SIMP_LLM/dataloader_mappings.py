@@ -108,6 +108,10 @@ def embed_edges(hrt_data, relation_lookup, graph_obj, mapping_dict, encoder, dev
         relation_subset = relation_lookup[relation_lookup['relation_name'] == relation_name]  
         hrt_subset = hrt_data[hrt_data[1].isin(relation_subset['drkg_id'])]   
 
+        # If no entries in translated DRKG for relation name, continue
+        if len(hrt_subset) == 0:
+            continue
+
         # Get head and tail entity types from data
         head_entity = relation_subset['head_entity'].unique()
         tail_entity = relation_subset['tail_entity'].unique()
