@@ -77,7 +77,7 @@ def create_edges(df, src_index_col, src_mapping, dst_index_col, dst_mapping,edge
     return edge_index,edge_attr
         
 
-def embed_entities(entity_df, graph_obj, Encoder, device):
+def embed_entities(entity_df, graph_obj, encoder, device):
     '''Embeds entities, inputs embeddings directly into Heterograph object, and returns mapping dictionary (which is a dictionary of dictionaries) by entity type'''
     
     entity_lookup = entity_df.copy()
@@ -85,7 +85,7 @@ def embed_entities(entity_df, graph_obj, Encoder, device):
 
     for entity in entity_lookup['entity_type'].unique():                                        # For each entity type
         entity_names = entity_lookup.loc[entity_lookup['entity_type'] == entity, 'name']        # Get entity names associated with entity type
-        entity_X, entity_mapping = create_mapping(entity_names, encoder=Encoder, device=device) # Maps entities to indices
+        entity_X, entity_mapping = create_mapping(entity_names, encoder=encoder, device=device) # Maps entities to indices
         graph_obj[entity].x = entity_X                                                          # Assign entity type embeddings to graph object
         mapping_dict[entity] = entity_mapping                                                   # Add entity type mapping to overall mapping dictionary
     
