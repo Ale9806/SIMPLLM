@@ -81,3 +81,12 @@ def convert_entitynames(df, col, node_dict):
   df_update = df.copy()
   df_update[col] = df_update[col].map(node_dict)    # Translate dictionary, dont replace NAs
   return df_update
+
+
+def flip_headtail(df, search_string):
+    """Flip heads and tails where relationship contains certain string"""
+    df_update = df.copy()
+    heads = df_update[0].copy()
+    df_update.loc[df_update[1].str.contains(search_string), 0] = df_update[2]
+    df_update.loc[df_update[1].str.contains(search_string), 2] = heads
+    return df_update
