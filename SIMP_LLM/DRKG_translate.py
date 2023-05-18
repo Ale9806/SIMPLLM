@@ -6,7 +6,7 @@ import re
 import sys
 
 
-########## String Processing Functions ###################
+########## Lookup Table Processing Functions ###################
 
 def print_head(df:pd.core.frame.DataFrame,n:int=5) -> None:
   print(tabulate.tabulate(df.head(n) , headers='keys', tablefmt='psql'))
@@ -219,3 +219,4 @@ if __name__ == "__main__":
    dfs = load_lookups(data_path)
    for df in dfs:
       print(df.head(5))
+
