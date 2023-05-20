@@ -35,7 +35,7 @@ def create_mapping(entity_list: list, encoder=None, batch_size=64, device=None) 
             batch_encodings = encoder(batch_entities)
 
             if device is not None:
-                batch_encodings = batch_encodings.to('cpu')
+                batch_encodings = batch_encodings.to(device)
 
             encoded_entities.append(batch_encodings)
 
