@@ -57,6 +57,7 @@ def get_reps(dataset, model, tokenizer, batchsize=20,device="cpu"):
 
     """
     data = []
+    model.to(device)
     with torch.no_grad():
         # Iterate over dataset in batches:
         for batch_list in batch_iter(dataset, batchsize):
@@ -93,6 +94,6 @@ class EntityEncoder:
 
     @torch.no_grad()
     def __call__(self, value):
-        outputs = get_reps(value, self.model, self.tokenizer)
+        outputs = get_reps(value, self.model, self.tokenizer, device=self.device)
         return outputs
 
