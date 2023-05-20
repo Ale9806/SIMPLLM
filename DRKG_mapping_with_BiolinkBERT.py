@@ -1,0 +1,259 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# DRKG
+# 
+# Adapted from: https://github.com/gnn4dr/DRKG/blob/master/drkg_with_dgl/loading_drkg_in_dgl.ipynb
+
+# In[1]:
+
+
+import pandas as pd
+import numpy as np
+import os 
+
+
+# In[2]:
+
+
+from SIMP_LLM.DRKG_loading   import  get_triplets, read_tsv,filter_drkg,map_drkg_relationships,filter_interaction_subset,print_head
+from SIMP_LLM.DRKG_translate import  load_lookups
+from SIMP_LLM.DRKG_entity_processing import get_unique_entities, get_entity_lookup, convert_entitynames, flip_headtail
+
+
+# # 1) Load Data
+
+# In[3]:
+
+
+### 1) Read: This section reads DRKG and a glossary (used to map entities from codes to words)
+DATA_DIR           = os.path.join("data")
+verbose            =  True 
+triplets,drkg_df   =  get_triplets(drkg_file = os.path.join(DATA_DIR  ,'drkg.tsv'),             verbose=verbose)  # Read triplets (head,relationship,tail)
+relation_glossary  =  read_tsv(relation_file = os.path.join(DATA_DIR  ,'relation_glossary.tsv'),verbose=verbose)  # Read relationship mapping  
+
+
+### 2) Filter & Map Interactions: This section returns a list of interactions e.g. DRUGBANK::treats::Compound:Disease )
+# 2.1: First  we filter the interactions to only Compound-Disease
+# 2.2: Then   we map the codes -> text  (this will be use to further filter interactions based on text) e.g.  Hetionet::CpD::Compound:Disease -> palliation
+# 2.3: We use natural text to fitler  interactions based on terms such as "treat" (but we return the orignal interaction name )
+
+
+
+# modularize this in create_dataframe
+drkg_rx_dx_relations        = filter_drkg(data_frame = drkg_df ,  filter_column = 1 ,  filter_term = r'.*?Compound:Disease', verbose = verbose) # 2.1 Filter only Compound-Disease Interactions
+drkg_rx_dx_relations_mapped = map_drkg_relationships(drkg_rx_dx_relations,relation_glossary,verbose=verbose)                                    # 2.2 Map codes to text 
+
+### 2.3 Filter Drug interactions Interaction types to only include: treat inhibit or alleviate interactions  ###
+drkg_rx_dx_relation_subset =  filter_interaction_subset(df                  = drkg_rx_dx_relations_mapped,
+                                                        filter_colunm_name = 'Interaction-type' ,
+                                                        regex_string       =  'treat|inhibit|alleviate',
+                                                        return_colunm_name =  'Relation-name')
+
+# 3) Use Filter Interactions to get Gilter DRKG 
+drkg_df_filtered = drkg_df[drkg_df[1].isin(drkg_rx_dx_relation_subset)] # 3.1 Filter DRKG  to only  Compund-Disease 
+print_head(df=drkg_df_filtered)
+
+
+
+###
+
+rx_dx_triplets   = drkg_df_filtered.values.tolist()                     # 3.2 Convert filtered DRKG to list
+
+
+# In[4]:
+
+
+# 4) Load Data frames for translation
+hetionet_df, gene_df, drugbank_df, omim_df, mesh_dict, chebi_df, chembl_df = load_lookups(data_path=DATA_DIR,verbose=verbose)
+
+
+# In[5]:
+
+
+# Make dictionaries for codes
+code_df   = pd.concat([hetionet_df[['name', 'id']], 
+                       gene_df.rename(columns = {"description":"name", "GeneID":"id"}),
+                       drugbank_df.rename(columns = {"Common name":"name", "DrugBank ID":"id"}),
+                       omim_df.rename(columns = {"MIM Number":"id"}),
+                       chebi_df.rename(columns = {"NAME":"name", "CHEBI_ACCESSION":"id"}),
+                       chembl_df.rename(columns = {"pref_name":"name", "chembl_id":"id"})
+                       ], ignore_index=True, axis=0).drop_duplicates() 
+code_dict = pd.Series(code_df['name'].values, index=code_df['id']).to_dict() | mesh_dict # Convert node df to dict and merge with MeSH dictionary
+
+# Get unique DRKG entities
+drkg_entities = get_unique_entities(drkg_df, [0,2])
+
+# Create and use convert_entitynames function
+drkg_entity_df, drkg_unmatched = get_entity_lookup(drkg_entities, code_dict)
+
+# Create final node dictionary
+node_dict = pd.Series(drkg_entity_df['name'].values, index=drkg_entity_df['drkg_id']).to_dict() 
+
+# Initialize translated DRKG and manually clean heads/tails for one case where they were flipped
+drkg_translated    = drkg_df.copy()
+drkg_translated = flip_headtail(drkg_translated, 'Gene:Compound')
+
+# Map DRKG to translated entity names
+drkg_translated = convert_entitynames(drkg_translated, 0, node_dict)
+drkg_translated = convert_entitynames(drkg_translated, 2, node_dict)
+drkg_translated = drkg_translated.dropna()
+print_head(drkg_translated) 
+
+# Summarize percentage translated
+print("Number of unique DRKG entities: ", len(drkg_entities)) # should be 97238
+print("Number of translated entities: ", drkg_entity_df.shape[0])
+print("Number of untranslated entities: ", drkg_unmatched.shape[0])
+pct_entity_translated = drkg_entity_df.shape[0]/len(drkg_entities)
+print('Percentage of entities translated: ', round(pct_entity_translated*100,1), '%')
+
+print('Total DRKG relationships: ', drkg_df.shape[0])
+print('Translated DRKG relationships: ', drkg_translated.shape[0])
+pct_translated = drkg_translated.shape[0]/drkg_df.shape[0]
+print('Percentage of relationships fully translated: ', round(pct_translated*100,1), '%')
+
+
+# In[6]:
+
+
+# Update relation glossary 
+relation_df = relation_glossary.copy().rename(columns={'Relation-name':'drkg_id'})
+relation_df[['head_entity','tail_entity']] = relation_df['drkg_id'].str.split('::', expand=True)[2].str.split(':', expand=True) # Set head and tail nodes
+
+# Manually fix head and tail nodes for DGIDB relations, which reverse compound-gene interactions
+relation_df.loc[relation_df['drkg_id'].str.contains('Gene:Compound'),'head_entity'] = 'Compound'
+relation_df.loc[relation_df['drkg_id'].str.contains('Gene:Compound'),'tail_entity'] = 'Gene'
+
+# Add mapped relation group labels
+relation_groups = [['activation', 'agonism', 'agonism, activation', 'activates, stimulates'],
+    ['antagonism', 'blocking', 'antagonism, blocking'],
+    ['binding', 'binding, ligand (esp. receptors)'],
+    ['blocking', 'channel blocking'],
+    ['inhibition', 'inhibits cell growth (esp. cancers)', 'inhibits'],
+    ['enzyme', 'enzyme activity'],
+    ['upregulation', 'increases expression/production'],
+    ['downregulation', 'decreases expression/production'],
+    ['Compound treats the disease', 'treatment/therapy (including investigatory)', 'treatment']]
+
+relation_df['relation_name'] = relation_df['Interaction-type']
+
+for grp in relation_groups:
+    relation_df_subset = relation_df[relation_df['Interaction-type'].isin(grp)].copy()
+    for entities in relation_df_subset['Connected entity-types'].unique():
+        subgrp = relation_df_subset[relation_df_subset['Connected entity-types'] == entities]['Interaction-type'].unique()
+        relation_df.loc[(relation_df_subset['Connected entity-types'] == entities) & (relation_df['Interaction-type'].isin(subgrp)), 'relation_name'] = subgrp[0]
+
+relation_df
+
+
+# In[7]:
+
+
+# Test specific cases
+test = 'inhibition'
+relation_df[relation_df['relation_name']==test]
+# relation_df[relation_df['Connected entity-types']=='Compound:Disease']
+
+
+# In[8]:
+
+
+# Filter DRKG in natural language to drug-treats-disease relationships
+# rx_dx        = df_med[df_med.iloc[:,1] ==   'Compound treats the disease']
+rx_dx        =  drkg_translated[drkg_translated[1].isin(drkg_rx_dx_relation_subset)]
+rx_dx_subset =  rx_dx[0:10]
+rx_dx_subset
+
+
+# # 3) BioLinkBERT embedding
+
+# In[9]:
+
+
+from torch_geometric.data import HeteroData
+from SIMP_LLM.llm_encode import EntityEncoder
+from SIMP_LLM.dataloader_mappings import create_mapping, create_edges, embed_entities, embed_edges
+
+
+# ### Set variables and load data
+
+# In[10]:
+
+
+import torch
+
+
+# In[11]:
+
+
+torch.cuda.is_available()
+
+
+# In[12]:
+
+
+## Example of loading data without anything to encode
+device   = 'cuda' if torch.cuda.is_available() else 'cpu'
+Encoder  = EntityEncoder(device = device)
+
+
+# Create relationship subset for testing
+test_relation_df = relation_df[relation_df['Connected entity-types'].isin(['Compound:Gene', 'Disease:Gene', 'Compound:Disease', 'Gene:Gene'])].copy()
+test_relation_df['relation_name'] = None
+
+activation_list = ['activation', 'agonism', 'agonism, activation'] 
+treat_list = ['Compound treats the disease', 'treats']
+gene_drug_list = ['inhibition']
+
+test_relation_df['relation_name'][test_relation_df['Interaction-type'].isin(activation_list)] = 'Compound activates gene'
+test_relation_df['relation_name'][test_relation_df['Interaction-type'].isin(treat_list)] = 'Compound treats disease'
+test_relation_df['relation_name'][test_relation_df['Interaction-type'].isin(gene_drug_list)] = 'Inhibition'
+test_relation_df = test_relation_df[~test_relation_df['relation_name'].isna()]
+print_head(test_relation_df)
+
+# Create test sample of DRKG relationships filtering to these relations (for full sample: delete and use drkg_entity_df)
+test_hrt_df = drkg_translated[drkg_translated[1].isin(test_relation_df['drkg_id'])]
+test_hrt_df = test_hrt_df.groupby(1).head(3).reset_index(drop=True)
+test_unique_entities = get_unique_entities(test_hrt_df, columns=[0,2])
+test_entity_df = drkg_entity_df[drkg_entity_df['name'].isin(test_unique_entities)]
+print_head(test_hrt_df)
+print_head(test_entity_df)
+
+
+entity_df = drkg_entity_df.copy() # (for full sample: replace test_entity_df with drkg_entity_df)
+hrt_data = drkg_translated.copy() # (for full sample: replace test_hrt_df with drkg_translated)
+relation_lookup = relation_df.copy() # (for full sample: replace test_relation_df with the updated relation_glossary with relation_name)
+
+
+# ### Build HeteroData Object
+
+# In[13]:
+
+
+# Initialize heterograph object
+graph_obj = HeteroData().to(device)
+print(device)
+# Embed entities, add to graph, and save embedding mapping dictionary of dictionaries
+mapping_dict = embed_entities(entity_df, graph_obj, Encoder, device) 
+
+# Embed relationships, add to graph, and save relation embeddings/mapping dictionary
+relation_X, relation_mapping = embed_edges(hrt_data, relation_lookup, graph_obj, mapping_dict, Encoder, device)
+
+# Print summary
+# print(graph_obj)
+# for ent_type in entity_df['entity_type'].unique():
+#     print(f"Unique {ent_type}s: {len(mapping_dict[ent_type])} \t Matrix shape: {graph_obj[ent_type].x.shape }")
+#     # print(mapping_dict[ent_type]) # Prints whole dictionary so delete/uncomment if using all entities
+
+
+# ## Save stuff
+
+# In[14]:
+
+
+# graph_obj, mapping_dict, relation_X, relation_mapping
+torch.save(graph_obj, 'data/all/graph_obj')
+torch.save(mapping_dict, 'data/all/mapping_dict')
+torch.save(relation_X, 'data/all/relation_X')
+torch.save(relation_mapping, 'data/all/relation_mapping')
+
