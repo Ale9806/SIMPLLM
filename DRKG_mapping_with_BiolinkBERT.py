@@ -124,6 +124,11 @@ relation_df[['head_entity','tail_entity']] = relation_df['drkg_id'].str.split(':
 relation_df.loc[relation_df['drkg_id'].str.contains('Gene:Compound'),'head_entity'] = 'Compound'
 relation_df.loc[relation_df['drkg_id'].str.contains('Gene:Compound'),'tail_entity'] = 'Gene'
 
+# Fix bioarx entries without the second "::" delimiter
+bioarx_ht = relation_df['drkg_id'].str.split(':', expand=True)[[3,4]]
+relation_df['head_entity'] = np.where(relation_df['head_entity'].isna(), bioarx_ht[3], relation_df['head_entity'])
+relation_df['tail_entity'] = np.where(relation_df['tail_entity'].isna(), bioarx_ht[4], relation_df['tail_entity'])
+
 # Add mapped relation group labels
 relation_groups = [['activation', 'agonism', 'agonism, activation', 'activates, stimulates'],
     ['antagonism', 'blocking', 'antagonism, blocking'],
@@ -195,34 +200,40 @@ torch.cuda.is_available()
 ## Example of loading data without anything to encode
 device   = 'cuda' if torch.cuda.is_available() else 'cpu'
 Encoder  = EntityEncoder(device = device)
+run_full_sample = 1
 
 
-# Create relationship subset for testing
-test_relation_df = relation_df[relation_df['Connected entity-types'].isin(['Compound:Gene', 'Disease:Gene', 'Compound:Disease', 'Gene:Gene'])].copy()
-test_relation_df['relation_name'] = None
+if run_full_sample:
+    # Run full DRKG
+    entity_df = drkg_entity_df.copy()
+    hrt_data = drkg_translated.copy()
+    relation_lookup = relation_df.copy()
+else:
+    # Create relationship subset for testing
+    test_relation_df = relation_df[relation_df['Connected entity-types'].isin(['Compound:Gene', 'Disease:Gene', 'Compound:Disease', 'Gene:Gene'])].copy()
+    test_relation_df['relation_name'] = None
 
-activation_list = ['activation', 'agonism', 'agonism, activation'] 
-treat_list = ['Compound treats the disease', 'treats']
-gene_drug_list = ['inhibition']
+    activation_list = ['activation', 'agonism', 'agonism, activation'] 
+    treat_list = ['Compound treats the disease', 'treats']
+    gene_drug_list = ['inhibition']
 
-test_relation_df['relation_name'][test_relation_df['Interaction-type'].isin(activation_list)] = 'Compound activates gene'
-test_relation_df['relation_name'][test_relation_df['Interaction-type'].isin(treat_list)] = 'Compound treats disease'
-test_relation_df['relation_name'][test_relation_df['Interaction-type'].isin(gene_drug_list)] = 'Inhibition'
-test_relation_df = test_relation_df[~test_relation_df['relation_name'].isna()]
-print_head(test_relation_df)
+    test_relation_df['relation_name'][test_relation_df['Interaction-type'].isin(activation_list)] = 'Compound activates gene'
+    test_relation_df['relation_name'][test_relation_df['Interaction-type'].isin(treat_list)] = 'Compound treats disease'
+    test_relation_df['relation_name'][test_relation_df['Interaction-type'].isin(gene_drug_list)] = 'Inhibition'
+    test_relation_df = test_relation_df[~test_relation_df['relation_name'].isna()]
+    print_head(test_relation_df)
 
-# Create test sample of DRKG relationships filtering to these relations (for full sample: delete and use drkg_entity_df)
-test_hrt_df = drkg_translated[drkg_translated[1].isin(test_relation_df['drkg_id'])]
-test_hrt_df = test_hrt_df.groupby(1).head(3).reset_index(drop=True)
-test_unique_entities = get_unique_entities(test_hrt_df, columns=[0,2])
-test_entity_df = drkg_entity_df[drkg_entity_df['name'].isin(test_unique_entities)]
-print_head(test_hrt_df)
-print_head(test_entity_df)
+    # Create test sample of DRKG relationships filtering to these relations (for full sample: delete and use drkg_entity_df)
+    test_hrt_df = drkg_translated[drkg_translated[1].isin(test_relation_df['drkg_id'])]
+    test_hrt_df = test_hrt_df.groupby(1).head(3).reset_index(drop=True)
+    test_unique_entities = get_unique_entities(test_hrt_df, columns=[0,2])
+    test_entity_df = drkg_entity_df[drkg_entity_df['name'].isin(test_unique_entities)]
+    print_head(test_hrt_df)
+    print_head(test_entity_df)
 
-
-entity_df = drkg_entity_df.copy() # (for full sample: replace test_entity_df with drkg_entity_df)
-hrt_data = drkg_translated.copy() # (for full sample: replace test_hrt_df with drkg_translated)
-relation_lookup = relation_df.copy() # (for full sample: replace test_relation_df with the updated relation_glossary with relation_name)
+    entity_df = test_entity_df.copy()
+    hrt_data = test_hrt_df.copy()
+    relation_lookup = relation_df.copy()
 
 
 # ### Build HeteroData Object
