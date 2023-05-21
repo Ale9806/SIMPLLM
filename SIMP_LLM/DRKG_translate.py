@@ -52,7 +52,7 @@ def process_hetionet(df, verbose=False):
   return df_updated
 
 
-def read_and_process_gene_ID(relation_file=os.path.join("data", "Homo_sapiens.gene_info"), verbose=False):
+def read_and_process_gene_ID(relation_file, verbose=False):
   """  
   Process Gene ID lookup table in the following ways:
   - Filter to type = symbol (exclude synonym duplicates)
@@ -201,7 +201,7 @@ def load_lookups(data_path,verbose=False):
     hetionet_df_raw   =  read_tsv(os.path.join(data_path,'hetionet-v1.0-nodes.tsv'),verbose=verbose)    # Read relationship mapping
     hetionet_df       =  process_hetionet(df=hetionet_df_raw, verbose=verbose)    # Process entity names for clarity (e.g., F8 -> Gene F8) 
 
-    gene_df           =  read_and_process_gene_ID(verbose=verbose)                 
+    gene_df           =  read_and_process_gene_ID(os.path.join(data_path, "Homo_sapiens.gene_info"), verbose=verbose)                 
 
     drugbank_df       =  read_and_process_drugbank(os.path.join(data_path,'drugbank vocabulary.csv'), verbose=verbose) # Read and process DrugBank IDs
 
