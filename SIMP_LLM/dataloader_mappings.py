@@ -102,7 +102,10 @@ def embed_edges(hrt_data, relation_lookup, graph_obj, mapping_dict, encoder, dev
     # Create mapping for relations
     relation_lookup_subset = relation_lookup[relation_lookup['drkg_id'].isin(hrt_data[1])]  # Only use relations that are in the hrt data
     relation_name_list = relation_lookup_subset['relation_name'].unique()  # Only use relations that are in the hrt data
-    relation_X, relation_mapping = create_mapping(relation_name_list,encoder=encoder,device=device)  
+    relation_X, relation_mapping = create_mapping(relation_name_list,encoder=encoder,device=device)
+
+    torch.save(relation_X, 'data/all/relation_X')
+    torch.save(relation_mapping, 'data/all/relation_mapping')
 
     # By entity-entity pair
     for ent_types in relation_lookup_subset['Connected entity-types'].unique():
@@ -140,5 +143,7 @@ def embed_edges(hrt_data, relation_lookup, graph_obj, mapping_dict, encoder, dev
 
             graph_obj[head_entity, relation_name, tail_entity].edge_index = Edge_index
             graph_obj[head_entity, relation_name, tail_entity].edge_label = edge_attribute 
+
+        torch.save(graph_obj, 'data/all/graph_obj')
 
     return relation_X, relation_mapping

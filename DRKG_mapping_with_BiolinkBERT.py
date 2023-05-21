@@ -245,7 +245,8 @@ else:
 graph_obj = HeteroData().to(device)
 print(device)
 # Embed entities, add to graph, and save embedding mapping dictionary of dictionaries
-mapping_dict = embed_entities(entity_df, graph_obj, Encoder, device) 
+mapping_dict = embed_entities(entity_df, graph_obj, Encoder, device)
+torch.save(mapping_dict, 'data/all/mapping_dict')
 
 # Embed relationships, add to graph, and save relation embeddings/mapping dictionary
 relation_X, relation_mapping = embed_edges(hrt_data, relation_lookup, graph_obj, mapping_dict, Encoder, device)
@@ -264,7 +265,6 @@ relation_X, relation_mapping = embed_edges(hrt_data, relation_lookup, graph_obj,
 
 # graph_obj, mapping_dict, relation_X, relation_mapping
 torch.save(graph_obj, 'data/all/graph_obj')
-torch.save(mapping_dict, 'data/all/mapping_dict')
 torch.save(relation_X, 'data/all/relation_X')
 torch.save(relation_mapping, 'data/all/relation_mapping')
 
