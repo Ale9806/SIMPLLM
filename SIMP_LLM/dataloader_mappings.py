@@ -69,7 +69,8 @@ def create_edges(df, src_index_col, src_mapping, dst_index_col, dst_mapping,edge
     '''
     src        = [src_mapping[index] for index in df[src_index_col]]
     dst        = [dst_mapping[index] for index in df[dst_index_col]]
-    edge_index = torch.tensor([src, dst])
+    edge_index = torch.tensor([src, dst], dtype=torch.long)
+
 
     if edge_attr is not None:
       edge_attr = edge_attr.repeat(len(edge_index[0]), 1)
@@ -100,8 +101,8 @@ def embed_edges(hrt_data, relation_lookup, graph_obj, mapping_dict, encoder, dev
     Returns relation tensor and mapping while directly embedding graph.
     '''
     # Create mapping for relations
-    relation_lookup_subset = relation_lookup[relation_lookup['drkg_id'].isin(hrt_data[1])]  # Only use relations that are in the hrt data
-    relation_name_list = relation_lookup_subset['relation_name'].unique()  # Only use relations that are in the hrt data
+    relation_lookup_subset       = relation_lookup[relation_lookup['drkg_id'].isin(hrt_data[1])]  # Only use relations that are in the hrt data
+    relation_name_list           = relation_lookup_subset['relation_name'].unique()  # Only use relations that are in the hrt data
     relation_X, relation_mapping = create_mapping(relation_name_list,encoder=encoder,device=device)
 
     torch.save(relation_X, 'data/all/relation_X')
