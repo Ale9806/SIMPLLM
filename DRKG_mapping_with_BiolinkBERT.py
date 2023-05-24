@@ -19,6 +19,7 @@ import os
 from SIMP_LLM.DRKG_loading   import  get_triplets, read_tsv,filter_drkg,map_drkg_relationships,filter_interaction_subset,print_head
 from SIMP_LLM.DRKG_translate import  load_lookups
 from SIMP_LLM.DRKG_entity_processing import get_unique_entities, get_entity_lookup, convert_entitynames, flip_headtail
+from SIMP_LLM.raredisease_loading import get_orphan_data
 
 
 # # 1) Load Data
@@ -67,6 +68,12 @@ rx_dx_triplets   = drkg_df_filtered.values.tolist()                     # 3.2 Co
 # 4) Load Data frames for translation
 hetionet_df, gene_df, drugbank_df, omim_df, mesh_dict, chebi_df, chembl_df = load_lookups(data_path=DATA_DIR,verbose=verbose)
 
+# Load orphan disease names and codes (28 Nov 2022 version) # SP 05/24/23
+orphan_names, orphan_codes = get_orphan_data(os.path.join(DATA_DIR, 'en_product1-Orphadata.xml'), verbose=verbose)
+
+# Get orphan disease MeSH codes
+orphan_codes_mesh = orphan_codes[orphan_codes['code_source']=='MeSH'].copy()
+orphan_codes_mesh['id'] = 'MESH::'+orphan_codes_mesh['code']
 
 # In[5]:
 
@@ -77,7 +84,8 @@ code_df   = pd.concat([hetionet_df[['name', 'id']],
                        drugbank_df.rename(columns = {"Common name":"name", "DrugBank ID":"id"}),
                        omim_df.rename(columns = {"MIM Number":"id"}),
                        chebi_df.rename(columns = {"NAME":"name", "CHEBI_ACCESSION":"id"}),
-                       chembl_df.rename(columns = {"pref_name":"name", "chembl_id":"id"})
+                       chembl_df.rename(columns = {"pref_name":"name", "chembl_id":"id"}),
+                       orphan_codes_mesh.rename(columns = {"Name":"name"})
                        ], ignore_index=True, axis=0).drop_duplicates() 
 code_dict = pd.Series(code_df['name'].values, index=code_df['id']).to_dict() | mesh_dict # Convert node df to dict and merge with MeSH dictionary
 
