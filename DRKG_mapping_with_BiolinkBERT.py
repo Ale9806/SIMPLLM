@@ -148,6 +148,17 @@ for grp in relation_groups:
         subgrp = relation_df_subset[relation_df_subset['Connected entity-types'] == entities]['Interaction-type'].unique()
         relation_df.loc[(relation_df_subset['Connected entity-types'] == entities) & (relation_df['Interaction-type'].isin(subgrp)), 'relation_name'] = subgrp[0]
 
+# Remove special characters from relation names
+relation_df['relation_name'] = relation_df['relation_name'].str.replace(',|/', ' or ', regex=True)
+relation_df['relation_name'] = relation_df['relation_name'].str.replace('esp.','especially')
+relation_df['relation_name'] = relation_df['relation_name'].str.replace('\(|\)|-|\.', '', regex=True)
+
+# Check if any relationshp names still have non alpha numeric values except space
+error_relation_names = relation_df['relation_name'][relation_df['relation_name'].str.replace(' ', '').str.contains(r"[^a-zA-Z0-9]+", regex=True)].drop_duplicates()
+if len(error_relation_names):
+    print('Warning: The following relation names contain special characters, which can interfere with PyG/GraphSage')
+    print(error_relation_names)
+    
 relation_df
 
 
