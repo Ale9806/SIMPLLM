@@ -1,6 +1,7 @@
 import torch 
 import pandas as pd 
 import numpy as np
+import os
 
 def create_mapping(entity_list: list, encoder=None, batch_size=64, device=None) -> dict:
     """
@@ -93,7 +94,7 @@ def embed_entities(entity_df, graph_obj, encoder, device):
     return mapping_dict
 
 
-def embed_edges(hrt_data, relation_lookup, graph_obj, mapping_dict, encoder, device):
+def embed_edges(hrt_data, relation_lookup, graph_obj, mapping_dict, encoder, device, data_path='data'):
     '''
     Given dataframe with columns for head-relationship-tail (h,r,t) in that order, create edges in Heterograph object by relationship type.
     Assumes entity types are already embedded in graph.
@@ -105,8 +106,8 @@ def embed_edges(hrt_data, relation_lookup, graph_obj, mapping_dict, encoder, dev
     relation_name_list           = relation_lookup_subset['relation_name'].unique()  # Only use relations that are in the hrt data
     relation_X, relation_mapping = create_mapping(relation_name_list,encoder=encoder,device=device)
 
-    torch.save(relation_X, 'data/all/relation_X')
-    torch.save(relation_mapping, 'data/all/relation_mapping')
+    torch.save(relation_X, os.path.join(data_path,'all/relation_X'))
+    torch.save(relation_mapping, os.path.join(data_path,'all/relation_mapping'))
 
     # By entity-entity pair
     for ent_types in relation_lookup_subset['Connected entity-types'].unique():
@@ -145,6 +146,6 @@ def embed_edges(hrt_data, relation_lookup, graph_obj, mapping_dict, encoder, dev
             graph_obj[head_entity, relation_name, tail_entity].edge_index = Edge_index
             graph_obj[head_entity, relation_name, tail_entity].edge_label = edge_attribute 
 
-        torch.save(graph_obj, 'data/all/graph_obj')
+        torch.save(graph_obj, os.path.join(data_path,'all/graph_obj'))
 
     return relation_X, relation_mapping
