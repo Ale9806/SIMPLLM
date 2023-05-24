@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import tabulate
 import xml.etree.ElementTree as ET
+import os
 
 
 
@@ -149,8 +150,10 @@ def pivot_orphan_data(long_df_processed, verbose=False):
 
 def get_orphan_data(relation_file = 'en_product1-Orphadata.xml', verbose=False):
     """
-    Get relevant orphan disease information from OrphaNet XML file
+    Get relevant orphan disease information from Orphanet XML file
     """
+    if os.path.isfile(relation_file) == False:
+        print('Orphanet file not found in this directory. May need to download from Google Drive data folder.')
 
     tree = ET.parse(relation_file)
     root = tree.getroot()[1]
