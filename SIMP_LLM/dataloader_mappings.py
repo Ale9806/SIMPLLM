@@ -43,8 +43,10 @@ def create_mapping(entity_list: list, encoder=None, batch_size=64, device=None) 
 
     else:
         encoded_entities = None
+        
+    
 
-    return  encoded_entities, mapping
+    return  encoded_entities.to("cpu"), mapping
 
 def embed_nodes(df, encoders=None, **kwargs):
     '''
