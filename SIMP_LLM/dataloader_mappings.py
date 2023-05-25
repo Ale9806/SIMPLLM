@@ -48,6 +48,7 @@ def create_mapping(entity_list: list, encoder=None, batch_size=64, device=None) 
 
     return  encoded_entities.to("cpu"), mapping
 
+
 def embed_nodes(df, encoders=None, **kwargs):
     '''
     Embeds values of dataframe and creates mapping using specified encoder.
