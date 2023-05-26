@@ -3,6 +3,7 @@ import numpy as np
 import tabulate
 import xml.etree.ElementTree as ET
 import os
+import re
 
 
 
@@ -173,3 +174,156 @@ def get_orphan_data(relation_file = 'en_product1-Orphadata.xml', verbose=False):
     orphan_names, orphan_codes = pivot_orphan_data(long_df_processed, verbose=verbose)
 
     return orphan_names, orphan_codes
+
+
+
+
+######## Functions to identify rare diseases in DRKG ##################
+
+# Helper function to see DRKG ontologies
+def get_drkg_entity_ontologies(df, entity_list):
+    """
+    From DRKG entity dataframe, get all ontology types associated with input entity types
+    """
+    df['matched'] = np.where((df['name'].isna()) | (df['entity_type'] == 'Tax'), 0, 1) # Flag if matched
+
+    # Count ontologies associated with entities
+    ontology_counts = df.loc[df['entity_type'].isin(entity_list)].groupby(['matched', 'ontology_name']).agg(
+        count = ('drkg_id', 'count')
+    ).reset_index()
+
+    return ontology_counts
+
+
+def read_and_process_doid(relation_file, filter_regex=r'UMLS|ICD|OMIM|MESH', verbose=False):
+  """  
+  Process Disease Ontology DOID lookup table in the following ways:
+  - Remove extra variables
+  - Filter to entries with code types in regex input (choose ontology types in Orphanet, in all caps)
+  """
+  df_raw = pd.read_csv(relation_file)
+
+  # Subset to relevant variables
+  doid_vars = ['id', 'Preferred Label', 'Synonyms', 'Definitions', 'CUI', 'database_cross_reference', 'has_alternative_id', 'has_exact_synonym', 'Parents']
+  df_subset = df_raw[doid_vars]
+
+  # Filter DOID to relevant codes
+  df_filter = df_subset[df_subset['database_cross_reference'].str.upper().str.contains(filter_regex, na=False)]
+
+  if verbose:
+    print(f"\n DOID Dataframe (After processing):\n")
+    print_head(df_filter)
+
+  return df_filter
+
+
+
+def create_orphanet_regex(orphan_codes, verbose=False):
+    """
+    Create regex strings for codes in Orphanet to search in DOID mapped codes with the following rules:
+
+    # Code ontology is at beginning of string or immediately after '|'
+    # Cannot have '|' between code ontology and code value
+    # Have ':' immediately before all code values
+    # For ICD codes, need to make sure to escape the middle period
+    # For all other codes beside ICD, code value must immediately precede end of string or '|' to allow no extra characters. 
+    # However, extra characters are OK for ICD since they indicate a subset of the rare disease
+
+    # Regex format: 
+    # ICD:   '(?:^|\|)ICD10(?:(?!\|).)*:E88\.9.*'
+    # Other (UMLS as example): '(?:^|\|)UMLS(?:(?!\|).)*:C0033(?:$|\|)'
+    """
+    orphan_codes_match = orphan_codes.copy()
+
+    # Escape period for ICD
+    orphan_codes_match['code'] = np.where(orphan_codes_match['code_source'].str.startswith('ICD'), 
+                                        orphan_codes_match['code'].str.replace('.','\.'),
+                                        orphan_codes_match['code'])
+    
+    # Create regex strings to follow above rules
+    orphan_codes_match['regex'] = '(?:^|\|)'+orphan_codes['code_source'].str.upper()+'(?:(?!\|).)*:'+orphan_codes['code']
+    orphan_codes_match['regex'] = orphan_codes_match['regex'].str.replace('-', '', regex=True)
+    orphan_codes_match['regex'] = np.where(orphan_codes_match['code_source'].str.startswith('ICD'), 
+                                        orphan_codes_match['regex']+'.*',
+                                        orphan_codes_match['regex']+'(?:$|\|)')
+    
+    if verbose:
+        print(f"\n Orphanet Dataframe with regex (After processing):\n")
+        print_head(orphan_codes_match)
+
+    return orphan_codes_match
+
+
+def merge_regex(regex_df, regex_col, search_df, search_col, verbose=False):
+    """Get mapping by regex"""
+    # Adapted from: https://stackoverflow.com/questions/62521616/can-i-perform-a-left-join-merge-between-two-dataframes-using-regular-expressions
+    idx = [(i,j) for i,r in enumerate(regex_df[regex_col]) for j,v in enumerate(search_df[search_col].astype(str)) if re.match(r,v)]
+    regex_df_idx, search_df_idx = zip(*idx)
+    t = regex_df.iloc[list(regex_df_idx),0].reset_index(drop=True)
+    t1 = search_df.iloc[list(search_df_idx),0].reset_index(drop=True)
+    outdata = pd.concat([t,t1],axis=1)
+    if verbose:
+        print(f"\n Regex mapping:\n")
+        print_head(outdata)
+    return outdata
+
+
+def check_raredisease_multiple_codes(matched_rarediseases, verbose=False):
+    """Check for rare diseases with multiple code types"""
+    # DRKG entities with multiple orphanet codes?
+    ct_orphacode = matched_rarediseases.groupby(by=['drkg_id','name', 'match_type']).agg(
+        ct_orphacode = ('Orphacode', 'count')
+    ).reset_index()
+    multiple_orphacode = ct_orphacode[ct_orphacode['ct_orphacode']>1]
+
+    # Orphacodes with multiple DRKG entities?
+    ct_drkg_id = matched_rarediseases.groupby(by=['Orphacode','name', 'match_type']).agg(
+        ct_drkg_id = ('drkg_id', 'count')
+    ).reset_index()
+    multiple_drkg = ct_drkg_id[ct_drkg_id['ct_drkg_id']>1]
+
+    if verbose:
+        print('DRKG IDs associated with multiple Orphacodes: ', multiple_orphacode.shape[0])
+        print('Orphacodes associated with multiple DRKG IDs: ', multiple_drkg.shape[0])
+
+    return multiple_orphacode, multiple_drkg
+
+
+def find_drkg_rarediseases(drkg_all_entities, orphan_codes, orphacode_doid_regex, verbose=False):
+    """
+    Find DRKG entity IDs that match orphan disease codes from 
+    - orphan_codes (original Orphanet codes)
+    - orphacode_doid_regex (Orphanet codes matched to external DOID codes)
+    """
+    doid_orphan_codes = orphacode_doid_regex.merge(orphan_codes, how='left', on='Orphacode').drop_duplicates()
+
+    # Get matches on MeSH and OMIM codes
+    orphan_codes['code_source_upper'] = orphan_codes['code_source'].str.upper()
+    match_try1 = drkg_all_entities.merge(orphan_codes, how='inner', left_on=['ontology_name', 'code'], right_on=['code_source_upper', 'code'])
+    match_try1['match_type'] = 'MeSH/OMIM'
+
+    # Get matches on DOID regex matches with other Orphanet codes
+    match_try2 = drkg_all_entities.merge(doid_orphan_codes, how='inner', left_on='ontology_code', right_on='id')
+    match_try2['match_type'] = 'DOID regex'
+
+    # Match by name
+    match_try3 = drkg_all_entities.merge(orphan_codes, how='inner', left_on=drkg_all_entities['name'].str.upper(), right_on=orphan_codes['Name'].str.upper())
+    match_try3['match_type'] = 'Disease name'
+
+    # Stack matched entities
+    matched_rarediseases = pd.concat([match_try1, match_try2, match_try3], ignore_index=True, axis=0).drop_duplicates(subset=['drkg_id', 'Orphacode']) # keeps first entry of duplicates
+
+    if verbose:
+        print(f"\n DRKG-Orphacode matches:\n")
+        print_head(matched_rarediseases)
+
+        matches_by_type = matched_rarediseases.groupby(by=['match_type', 'entity_type', 'ontology_name']).agg(
+            count = ('drkg_id', 'count')
+        )
+        print(matches_by_type)
+
+        print('\nUnique matched rare disease DRKG IDs: ', len(matched_rarediseases['drkg_id'].unique()))
+        print('Unique matched Orphacodes: ', len(matched_rarediseases['Orphacode'].unique()))
+        _, _ = check_raredisease_multiple_codes(matched_rarediseases, verbose=verbose)
+
+    return matched_rarediseases

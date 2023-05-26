@@ -68,7 +68,7 @@ def embed_nodes(df, encoders=None, **kwargs):
 
 def create_edges(df, src_index_col, src_mapping, dst_index_col, dst_mapping,edge_attr=None):
     '''
-    THIS MAY BE OBSOLETE
+    Creates index matrix and edge attribute
     '''
     src        = [src_mapping[index] for index in df[src_index_col]]
     dst        = [dst_mapping[index] for index in df[dst_index_col]]
@@ -126,15 +126,20 @@ def embed_edges(hrt_data, relation_lookup, graph_obj, mapping_dict, encoder, dev
             if len(hrt_subset) == 0:
                 continue
 
-            # Get head and tail entity types from data
+            # Get head and tail entity types from data as well as relation_label
             head_entity = relation_subset['head_entity'].unique()
             tail_entity = relation_subset['tail_entity'].unique()
+            relation_label = relation_subset['relation_label'].unique()
 
             if len(head_entity) > 1 or len(tail_entity) > 1:
                 raise Exception(f"Multiple types of entities for the following relationship: {relation_name}")
             
+            if len(relation_label) > 1:
+                raise Exception(f"Multiple relation labels for the following relationship: {relation_name}")
+            
             head_entity = head_entity[0]
             tail_entity = tail_entity[0]
+            relation_label = relation_label[0]
             
             # Create edge attributes for graph
             relation_feature = relation_X[relation_mapping[relation_name],:].reshape(1,-1)
@@ -145,8 +150,8 @@ def embed_edges(hrt_data, relation_lookup, graph_obj, mapping_dict, encoder, dev
                                                     dst_mapping    = mapping_dict[tail_entity] ,
                                                     edge_attr      = relation_feature)
 
-            graph_obj[head_entity, relation_name, tail_entity].edge_index = Edge_index
-            graph_obj[head_entity, relation_name, tail_entity].edge_label = edge_attribute 
+            graph_obj[head_entity, relation_label, tail_entity].edge_index = Edge_index
+            graph_obj[head_entity, relation_label, tail_entity].edge_label = edge_attribute 
 
         torch.save(graph_obj, 'data/all/graph_obj')
 
