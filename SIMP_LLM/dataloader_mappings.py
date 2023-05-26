@@ -2,6 +2,7 @@ import torch
 import pandas as pd 
 import numpy as np
 from torch_geometric.data import HeteroData
+import torch_geometric.transforms as T
 
 def create_mapping(entity_list: list, encoder=None, batch_size=64, device=None) -> dict:
     """
@@ -177,6 +178,8 @@ def load_graph(triplets):
 
         graph_obj[h, r, t].edge_index = torch.load(f"data/ckpts/edge_index/{h}_{r}_{t}.pt")
         graph_obj[h, r, t].edge_attribute = torch.load(f"data/ckpts/edge_attribute/{h}_{r}_{t}.pt")
+
+        graph_obj = T.ToUndirected()(graph_obj)
 
     return graph_obj
 
