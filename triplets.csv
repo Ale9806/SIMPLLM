@@ -1,12 +1,10 @@
 ,head_entity,relation_label,tail_entity
 0,Compound,activation,Gene
-1,Compound,activation,Gene
 2,Compound,allosteric_modulation,Gene
 3,Compound,antagonism,Gene
 4,Compound,antibody,Gene
 5,Compound,binding,Gene
 6,Compound,blocking,Gene
-7,Compound,blocking,Gene
 8,Compound,inhibition,Gene
 9,Compound,modulation,Gene
 10,Compound,other,Gene
@@ -16,11 +14,7 @@
 14,Compound,drugdrug_interaction,Compound
 15,Compound,enzyme,Gene
 16,Compound,target,Gene
-17,Compound,Compound_belongs_to_Anatomical_Therapeutic_Chemical_ATC_code,Atc
 18,Compound,Compound_treats_the_disease,Disease
-19,Compound,activation,Gene
-20,Compound,antagonism,Gene
-21,Compound,binding,Gene
 22,Gene,binding_or_ligand_especially_receptors,Gene
 23,Compound,inhibits_cell_growth_especially_cancers,Disease
 24,Gene,drug_targets,Disease
@@ -38,14 +32,12 @@
 36,Gene,improper_regulation_linked_to_disease,Disease
 37,Gene,biomarkers_diagnostic,Disease
 38,Compound,biomarkers_of_disease_progression,Disease
-39,Compound,inhibition,Gene
 40,Compound,transport_or_channels,Gene
 41,Compound,alleviates_or_reduces,Disease
 42,Compound,prevents_or_suppresses,Disease
 43,Gene,production_by_cell_population,Gene
 44,Gene,regulation,Gene
 45,Compound,side_effect_oradverse_event,Disease
-46,Compound,Compound_treats_the_disease,Disease
 47,Gene,possible_therapeutic_effect,Disease
 48,Gene,causal_mutations,Disease
 49,Gene,mutations_affecting_disease_course,Disease
@@ -53,18 +45,12 @@
 51,Gene,enhances_response,Gene
 52,Gene,overexpression_in_disease,Disease
 53,Gene,polymorphisms_alter_risk,Disease
-54,Compound,enzyme,Gene
-55,Gene,gene_belongs_to_taxonomy,Tax
 56,Anatomy,downregulatation,Gene
 57,Anatomy,expression,Gene
 58,Anatomy,upregulation,Gene
-59,Compound,binding,Gene
 60,Compound,causes,Side Effect
-61,Compound,decreases_expression_orproduction,Gene
 62,Compound,palliation,Disease
 63,Compound,resemblence,Compound
-64,Compound,Compound_treats_the_disease,Disease
-65,Compound,increases_expression_orproduction,Gene
 66,Disease,association,Gene
 67,Disease,downregulation,Gene
 68,Disease,localization,Anatomy
@@ -77,7 +63,6 @@
 75,Gene,participation,Cellular Component
 76,Gene,participation,Molecular Function
 77,Gene,participation,Pathway
-78,Gene,regulation,Gene
 79,Pharmacologic Class,inclusion,Compound
 80,Gene,ADP_ribosylation_reaction,Gene
 81,Compound,association,Gene
@@ -92,8 +77,6 @@
 90,Gene,physical_association,Gene
 91,Gene,protein_cleavage,Gene
 92,Gene,ubiquitination_reaction,Gene
-93,Gene,activates_or_stimulates,Gene
-94,Gene,binding_or_ligand_especially_receptors,Gene
 95,Gene,catalysis,Gene
 96,Gene,expression,Gene
 97,Gene,inhibition,Gene
@@ -101,8 +84,4 @@
 99,Gene,posttranslational_modification,Gene
 100,Gene,reaction,Gene
 101,Disease,interaction,Gene
-102,Disease,interaction,Gene
 103,Compound,interaction,Gene
-104,Compound,interaction,Gene
-105,Gene,interaction,Gene
-106,Gene,interaction,Gene
