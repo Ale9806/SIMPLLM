@@ -28,7 +28,7 @@ from SIMP_LLM.raredisease_loading import get_orphan_data
 
 
 ### 1) Read: This section reads DRKG and a glossary (used to map entities from codes to words)
-DATA_DIR           = os.path.join("data")
+DATA_DIR           = os.path.join("data2")
 verbose            =  True 
 triplets,drkg_df   =  get_triplets(drkg_file = os.path.join(DATA_DIR  ,'drkg.tsv'),             verbose=verbose)  # Read triplets (head,relationship,tail)
 relation_glossary  =  read_tsv(relation_file = os.path.join(DATA_DIR  ,'relation_glossary.tsv'),verbose=verbose)  # Read relationship mapping  
@@ -285,5 +285,6 @@ relation_X, relation_mapping = embed_edges(hrt_data, relation_lookup, graph_obj,
 # graph_obj, mapping_dict, relation_X, relation_mapping
 torch.save(graph_obj, 'data/all/graph_obj')
 torch.save(relation_X, 'data/all/relation_X')
+torch.save(mapping_dict, 'data/all/mapping_dict')
 torch.save(relation_mapping, 'data/all/relation_mapping')
 
