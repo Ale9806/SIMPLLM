@@ -94,7 +94,7 @@ def embed_entities(entity_df, graph_obj, encoder, device):
         entity_names = entity_lookup.loc[entity_lookup['entity_type'] == entity, 'name']        # Get entity names associated with entity type
         entity_X, entity_mapping = create_mapping(entity_names, encoder=encoder, device=device) # Maps entities to indices
         graph_obj[entity].x = entity_X                                                          # Assign entity type embeddings to graph object
-        torch.save(entity_X, f"data/ckpts/entity/{entity}.pt")
+        torch.save(entity_X, f"data2/ckpts/entity/{entity}.pt")
         
         mapping_dict[entity] = entity_mapping                                                   # Add entity type mapping to overall mapping dictionary
     
@@ -113,8 +113,8 @@ def embed_edges(hrt_data, relation_lookup, graph_obj, mapping_dict, encoder, dev
     relation_name_list           = relation_lookup_subset['relation_name'].unique()  # Only use relations that are in the hrt data
     relation_X, relation_mapping = create_mapping(relation_name_list,encoder=encoder,device=device)
 
-    torch.save(relation_X, 'data/sage/relation_X')
-    torch.save(relation_mapping, 'data/sage/relation_mapping')
+    torch.save(relation_X, 'data2/relation_X')
+    torch.save(relation_mapping, 'data2/relation_mapping')
 
     # By entity-entity pair
     for ent_types in relation_lookup_subset['Connected entity-types'].unique():
@@ -157,29 +157,30 @@ def embed_edges(hrt_data, relation_lookup, graph_obj, mapping_dict, encoder, dev
 
             graph_obj[head_entity, relation_label, tail_entity].edge_index = Edge_index
             graph_obj[head_entity, relation_label, tail_entity].edge_label = edge_attribute
-            torch.save(Edge_index, f"data/ckpts/edge_index/{head_entity}_{relation_label}_{tail_entity}.pt")
-            torch.save(edge_attribute, f"data/ckpts/edge_attribute/{head_entity}_{relation_label}_{tail_entity}.pt")
+            torch.save(Edge_index, f"data2/ckpts/edge_index/{head_entity}_{relation_label}_{tail_entity}.pt")
+            torch.save(edge_attribute, f"data2/ckpts/edge_attribute/{head_entity}_{relation_label}_{tail_entity}.pt")
             
 
         graph_obj.to('cpu')
-        torch.save(graph_obj, 'data/sage/graph_obj')
+        torch.save(graph_obj, 'data2/sage/graph_obj')
 
     return relation_X, relation_mapping
 
-def load_graph(triplets):
+def load_graph(triplets,path="data2"):
     """
     Triplets must be (h, r, t)
     """
     graph_obj = HeteroData()
-
+    print(path)
     for (h, r, t) in triplets:
-        graph_obj[h].x = torch.load(f"data/ckpts/entity/{h}.pt")
-        graph_obj[t].x = torch.load(f"data/ckpts/entity/{t}.pt")
+        graph_obj[h].x = torch.load(f"{path}/ckpts/entity/{h}.pt")
+        graph_obj[t].x = torch.load(f"{path}/ckpts/entity/{t}.pt")
 
-        graph_obj[h, r, t].edge_index = torch.load(f"data/ckpts/edge_index/{h}_{r}_{t}.pt")
-        graph_obj[h, r, t].edge_attribute = torch.load(f"data/ckpts/edge_attribute/{h}_{r}_{t}.pt")
+        graph_obj[h, r, t].edge_index = torch.load(f"data2/ckpts/edge_index/{h}_{r}_{t}.pt")
+        
 
-        graph_obj = T.ToUndirected()(graph_obj)
+
+    graph_obj = T.ToUndirected()(graph_obj)
 
     return graph_obj
 
