@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 from torch_geometric.data import HeteroData
 import torch_geometric.transforms as T
+import csv
 
 def create_mapping(entity_list: list, encoder=None, batch_size=64, device=None) -> dict:
     """
@@ -185,3 +186,16 @@ def load_graph(triplets,path="data2"):
     return graph_obj
 
     
+
+def load_csv_as_list(file_path):
+    data = []
+    set_ = set()
+    with open(file_path, 'r') as file:
+        csv_reader = csv.reader(file)
+        next(csv_reader)
+        for row in csv_reader:
+            if row[3] == 'Atc' or row[3] == "Tax":
+                continue
+            else:
+                data.append((row[1],row[2],row[3]))
+    return data
