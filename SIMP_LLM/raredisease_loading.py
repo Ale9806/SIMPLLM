@@ -327,3 +327,21 @@ def find_drkg_rarediseases(drkg_all_entities, orphan_codes, orphacode_doid_regex
         _, _ = check_raredisease_multiple_codes(matched_rarediseases, verbose=verbose)
 
     return matched_rarediseases
+
+
+
+######## Functions to match rare diseases and drugs between DRKG and Drug Repurposing Hub database ##################
+
+def read_and_process_rep_drugs(relation_file, verbose=False):
+  """  
+  Process OMIM lookup table in the following ways:
+  - Remove extra variables
+  - Clean disease name
+  - Add "Disease::OMIM:" in front of OMIM ID to match DRKG format
+  """
+  df = pd.read_csv(relation_file, sep="\t", comment='!')
+
+  if verbose:
+    print(f"\n {relation_file}  Drug Repurposing Dataframe:\n")
+    print_head(df)
+  return df

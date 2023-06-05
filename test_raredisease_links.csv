@@ -1,0 +1,38 @@
+,compound,compound_drkg_id,rare_disease,disease_drkg_id
+0,Alpelisib,Compound::DB12015,breast cancer,Disease::DOID:1612
+1,Ambenonium,Compound::DB01122,Myasthenia Gravis,Disease::MESH:D009157
+2,Ambenonium,Compound::DB01122,Myasthenia gravis,Side Effect::C0026896
+3,Amrubicin,Compound::DB06263,Small cell lung cancer,Side Effect::C0149925
+4,Apalutamide,Compound::DB11901,prostate cancer,Disease::DOID:10283
+5,Artesunate,Compound::DB09274,Malaria,Disease::MESH:D008288
+6,Artesunate,Compound::DB09274,malaria,Disease::DOID:12365
+7,Artesunate,Compound::DB09274,Malaria,Side Effect::C0024530
+8,Darolutamide,Compound::DB12941,prostate cancer,Disease::DOID:10283
+9,Delamanid,Compound::DB11637,Tuberculosis,Disease::MESH:D014376
+10,Delamanid,Compound::DB11637,Tuberculosis,Side Effect::C0041296
+11,Didox,Compound::DB12948,breast cancer,Disease::DOID:1612
+12,Enzalutamide,Compound::DB08899,prostate cancer,Disease::DOID:10283
+13,HALOFUGINONE,Compound::CHEMBL1197091,Scleroderma,Side Effect::C0011644
+14,Halofuginone,Compound::DB04866,Scleroderma,Side Effect::C0011644
+15,Leucovorin,Compound::DB00650,Osteosarcoma,Disease::MESH:D012516
+16,Leuprolide,Compound::DB00007,prostate cancer,Disease::DOID:10283
+17,Lumefantrine,Compound::DB06708,Malaria,Disease::MESH:D008288
+18,Lumefantrine,Compound::DB06708,malaria,Disease::DOID:12365
+19,Lumefantrine,Compound::DB06708,Malaria,Side Effect::C0024530
+20,Panobinostat,Compound::DB06603,Multiple Myeloma,Disease::MESH:D009101
+21,Pomalidomide,Compound::DB08910,Multiple Myeloma,Disease::MESH:D009101
+22,Raltitrexed,Compound::DB00293,Mesothelioma,Disease::MESH:D008654
+23,Rimexolone,Compound::DB00896,Anterior uveitis,Side Effect::C0042165
+24,Selinexor,Compound::DB11942,Multiple Myeloma,Disease::MESH:D009101
+25,Solriamfetol,Compound::DB14754,Narcolepsy,Disease::MESH:D009290
+26,Solriamfetol,Compound::DB14754,Narcolepsy,Symptom::D009290
+27,Trofosfamide,Compound::DB12902,Medulloblastoma,Disease::MESH:D008527
+28,Abiraterone,Compound::DB05812,prostate cancer,Disease::DOID:10283
+29,Bicalutamide,Compound::DB01128,prostate cancer,Disease::DOID:10283
+30,Cabazitaxel,Compound::DB06772,prostate cancer,Disease::DOID:10283
+31,Degarelix,Compound::DB06699,prostate cancer,Disease::DOID:10283
+32,Estramustine,Compound::DB01196,prostate cancer,Disease::DOID:10283
+33,Flutamide,Compound::DB00499,prostate cancer,Disease::DOID:10283
+34,Fulvestrant,Compound::DB00947,breast cancer,Disease::DOID:1612
+35,Lapatinib,Compound::DB01259,breast cancer,Disease::DOID:1612
+36,Nilutamide,Compound::DB00665,prostate cancer,Disease::DOID:10283
