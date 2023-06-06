@@ -7,6 +7,7 @@ import numpy as np
 from sklearn         import metrics
 from sklearn.metrics import ConfusionMatrixDisplay
 from sklearn.metrics import accuracy_score
+from sklearn.metrics import auc 
 
 from   torch_geometric.utils import negative_sampling
 import torch.nn.functional as F
@@ -87,7 +88,9 @@ def forward_pass(model, link_predictor,data_embed,data_predict,data_sample,retur
     
     
     edge_index          = torch.cat((pos_edge_index, negative_edge_index), dim=1)
-    pred                = link_predictor(node_emb[prediction_entites[0]][edge_index[0]].to(device), node_emb[prediction_entites[1]][edge_index[1]].to(device))   
+    head                = node_emb[prediction_entites[0]][edge_index[0]].to(device)
+    tail                = node_emb[prediction_entites[1]][edge_index[1]].to(device)
+    pred                = link_predictor( head  ,    tail   )   
     
     ones_tensor         = torch.ones(pos_edge_index.shape[1])
     zero_tensor         = torch.zeros(negative_edge_index.shape[1])
@@ -96,7 +99,7 @@ def forward_pass(model, link_predictor,data_embed,data_predict,data_sample,retur
     
     
     if model !=  None and return_node_emb == True:
-        return (pred,node_emb)
+        return (pred,labels.to(device),head,tail,negative_edge_index )
     else:
         return pred,labels.to(device)
 
@@ -135,7 +138,7 @@ def train(model, link_predictor, data_embed,data_predict,data_sample, optimizer,
     pred,ground_truth   = forward_pass(model, link_predictor,data_embed= data_embed,data_predict=data_predict,data_sample=data_sample,return_node_emb=False)
     ground_truth       =  ground_truth.to(device)
  
-    if head == "MLP":
+    if head == "MLP" or  head ==  "MLP_ONLY"  :
         loss = F.binary_cross_entropy_with_logits(pred, ground_truth.unsqueeze(1).float())
     if head == "COSINE":
         loss = F.binary_cross_entropy_with_logits(pred, ground_truth.float())
@@ -147,8 +150,68 @@ def train(model, link_predictor, data_embed,data_predict,data_sample, optimizer,
 
 
 
+import pdb
+def train_with_triplet(model, link_predictor, data_embed,data_predict,data_sample, optimizer,triplet_loss,triplet:tuple=('Compound', 'Compound_treats_the_disease', 'Disease'),device:str="cuda",lambda_=0.7):
+    """
+    Runs offline training for model, link_predictor and node embeddings given the message
+    edges and supervision edges.
+    :param model: Torch Graph model used for updating node embeddings based on message passing 
+        (If None, no embbeding is performed) 
+    :param link_predictor: Torch model used for predicting whether edge exists or not
+    :param emb: (N, d) Initial node embeddings for all N nodes in graph
+    :param edge_index: (2, E) Edge index for all edges in the graph
 
-def evaluate(model,predictor,data_val_embed,data_val_predict,data_sample,threshold:float=0.5, show_extra_metrics=True):
+    :param optimizer: Torch Optimizer to update model parameters
+    :return: Average supervision loss over all positive (and correspondingly sampled negative) edges
+    """
+    if model != None: 
+        model.train()
+    link_predictor.train()
+    train_losses = []
+
+    optimizer.zero_grad()                                  # Reset Gradients
+    #edge_index     = torch.tensor(edge_index).T           # Reshape edge index     (2,|E|)
+    #x              = x.squeeze(dim=1)                     # Reshape Feature matrix (|N|,D)
+    #x , edge_index = x.to(device) , edge_index.to(device) # Move data to devices
+
+
+    ### Step 1: Get Embeddings:
+    # Run message passing on the inital node embeddings to get updated embeddings
+
+    ### This model has the option of only running link predictor without graphsage, for that case the node embedding
+    ### is equal to the original embedding (X)
+    pred,ground_truth,head,tail,negative_edge_index    = forward_pass(model, link_predictor,data_embed= data_embed,data_predict=data_predict,data_sample=data_sample,return_node_emb=True)
+    ground_truth                                        =  ground_truth.to(device)
+    
+    
+    # head halg is positive other half is negative
+    HEADS          = head[0:head.shape[0]//2,:]
+    Positive_links = tail[0:head.shape[0]//2,:]
+    Negative_links = tail[head.shape[0]//2:,:]
+    
+    perm             = torch.randperm(len(Negative_links))
+    Negative_links = Negative_links[perm]
+
+    #pdb.set_trace()
+
+  
+
+    loss_a = F.binary_cross_entropy_with_logits(pred, ground_truth.float())
+    loss_b = triplet_loss(  HEADS , Positive_links, Negative_links )
+    loss   = lambda_*loss_a + (1 -lambda_)*loss_b 
+    #loss   =  (1 -lambda_)*loss_b 
+    loss.backward()    # Backpropagate and update parameters
+    optimizer.step()
+    
+    
+
+    train_losses.append(loss.item())
+    return sum(train_losses) / len(train_losses)
+
+
+
+
+def evaluate(model,predictor,data_val_embed,data_val_predict,data_sample,threshold:float=0.5, show_extra_metrics=True,return_dict=False):
     model.eval()
     predictor.eval()
     with torch.no_grad():
@@ -159,16 +222,19 @@ def evaluate(model,predictor,data_val_embed,data_val_predict,data_sample,thresho
         fig, ax = plt.subplots(1, 2,figsize=(10,2))
         fpr, tpr, thresholds = metrics.roc_curve( ground_truth, pred)
         
+        auc_  =  auc(fpr, tpr)
+
+        
         sens      =  tpr
         spec      =  1 - fpr
         j         = sens + spec -1
         opt_index = np.where(j == np.max(j))[0][0]
         op_point  = thresholds[opt_index]
         
-        print(f"Youdens  index: {op_point:.4f} Sensitivity: {round(sens[opt_index],4)} Specificity: {round(spec[opt_index],4)}")
+        print(f"Youdens  index: {op_point:.4f} Sensitivity: {round(sens[opt_index],4)} Specificity: {round(spec[opt_index],4) } AUC: {auc_}")
        
         ax[0].set_title("ROC Curve")
-        ax[1].set_title("Confussion Matrix")
+        #ax[1].set_title("Confusion Matrix")
         if model == None:
             ax[0].plot(fpr,tpr,label="MLP") 
         else:
@@ -185,6 +251,11 @@ def evaluate(model,predictor,data_val_embed,data_val_predict,data_sample,thresho
         disp = ConfusionMatrixDisplay(cmn)
         disp.plot(ax=ax[1])
         
+        
+        
         plt.show()
-     
-    return acc
+        
+    if return_dict:
+        return  {"FPR": fpr.tolist(),"TPR":tpr.tolist(),"Sensitiviy":sens.tolist(),"Specificity":spec.tolist() ,"j": j.tolist(),"opitimal_point":(opt_index,op_point),"CFM": (cfm,cmn),"Acc":acc}
+    else:
+        return acc

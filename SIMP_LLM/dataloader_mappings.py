@@ -4,6 +4,7 @@ import numpy as np
 from torch_geometric.data import HeteroData
 import torch_geometric.transforms as T
 import csv
+import torch.nn as nn
 
 def create_mapping(entity_list: list, encoder=None, batch_size=64, device=None) -> dict:
     """
@@ -167,17 +168,36 @@ def embed_edges(hrt_data, relation_lookup, graph_obj, mapping_dict, encoder, dev
 
     return relation_X, relation_mapping
 
-def load_graph(triplets,path="data2"):
+import pdb
+def load_graph(triplets,path="data2",random_embeddings:bool = False):
     """
     Triplets must be (h, r, t)
     """
     graph_obj = HeteroData()
     print(path)
     for (h, r, t) in triplets:
-        graph_obj[h].x = torch.load(f"{path}/ckpts/entity/{h}.pt")
-        graph_obj[t].x = torch.load(f"{path}/ckpts/entity/{t}.pt")
-
-        graph_obj[h, r, t].edge_index = torch.load(f"data2/ckpts/edge_index/{h}_{r}_{t}.pt")
+        
+        if random_embeddings:
+            head    =  torch.load(f"{path}/ckpts/entity/{h}.pt")
+            n_m     = head.shape
+            head_   = torch.empty(n_m[0], n_m[1])
+            nn.init.uniform_(head_)
+            graph_obj[h].x = head_ 
+            
+            tail    = torch.load(f"{path}/ckpts/entity/{t}.pt")
+            n_m     = tail.shape
+            tail_   = torch.empty(n_m[0], n_m[1])
+            nn.init.uniform_(tail_)
+            graph_obj[t].x = tail_
+           
+        else:
+            graph_obj[h].x = torch.load(f"{path}/ckpts/entity/{h}.pt")
+            graph_obj[t].x = torch.load(f"{path}/ckpts/entity/{t}.pt")
+        
+        
+        graph_obj[h, r, t].edge_index =  torch.load(f"data2/ckpts/edge_index/{h}_{r}_{t}.pt")
+    
+    #pdb.set_trace()
         
 
 
