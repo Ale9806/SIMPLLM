@@ -27,12 +27,3 @@
 25,Solriamfetol,Compound::DB14754,Narcolepsy,Disease::MESH:D009290
 26,Solriamfetol,Compound::DB14754,Narcolepsy,Symptom::D009290
 27,Trofosfamide,Compound::DB12902,Medulloblastoma,Disease::MESH:D008527
-28,Abiraterone,Compound::DB05812,prostate cancer,Disease::DOID:10283
-29,Bicalutamide,Compound::DB01128,prostate cancer,Disease::DOID:10283
-30,Cabazitaxel,Compound::DB06772,prostate cancer,Disease::DOID:10283
-31,Degarelix,Compound::DB06699,prostate cancer,Disease::DOID:10283
-32,Estramustine,Compound::DB01196,prostate cancer,Disease::DOID:10283
-33,Flutamide,Compound::DB00499,prostate cancer,Disease::DOID:10283
-34,Fulvestrant,Compound::DB00947,breast cancer,Disease::DOID:1612
-35,Lapatinib,Compound::DB01259,breast cancer,Disease::DOID:1612
-36,Nilutamide,Compound::DB00665,prostate cancer,Disease::DOID:10283

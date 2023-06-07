@@ -1,0 +1,21 @@
+,compound,compound_drkg_id,rare_disease,disease_drkg_id
+0,alpelisib,Compound::DB12015,breast cancer,Disease::DOID:1612
+1,ambenonium,Compound::DB01122,myasthenia gravis,Disease::MESH:D009157
+3,amrubicin,Compound::DB06263,small cell lung cancer,Side Effect::C0149925
+4,apalutamide,Compound::DB11901,prostate cancer,Disease::DOID:10283
+5,artesunate,Compound::DB09274,malaria,Disease::MESH:D008288
+8,darolutamide,Compound::DB12941,prostate cancer,Disease::DOID:10283
+9,delamanid,Compound::DB11637,tuberculosis,Disease::MESH:D014376
+11,didox,Compound::DB12948,breast cancer,Disease::DOID:1612
+12,enzalutamide,Compound::DB08899,prostate cancer,Disease::DOID:10283
+13,halofuginone,Compound::CHEMBL1197091,scleroderma,Side Effect::C0011644
+15,leucovorin,Compound::DB00650,osteosarcoma,Disease::MESH:D012516
+16,leuprolide,Compound::DB00007,prostate cancer,Disease::DOID:10283
+17,lumefantrine,Compound::DB06708,malaria,Disease::MESH:D008288
+20,panobinostat,Compound::DB06603,multiple myeloma,Disease::MESH:D009101
+21,pomalidomide,Compound::DB08910,multiple myeloma,Disease::MESH:D009101
+22,raltitrexed,Compound::DB00293,mesothelioma,Disease::MESH:D008654
+23,rimexolone,Compound::DB00896,anterior uveitis,Side Effect::C0042165
+24,selinexor,Compound::DB11942,multiple myeloma,Disease::MESH:D009101
+25,solriamfetol,Compound::DB14754,narcolepsy,Disease::MESH:D009290
+27,trofosfamide,Compound::DB12902,medulloblastoma,Disease::MESH:D008527
