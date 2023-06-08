@@ -1,4 +1,5 @@
 
+# AUTHORS: Alejandro
 
 import torch
 import matplotlib.pyplot as plt #needed to visualize loss curves

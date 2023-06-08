@@ -1,3 +1,5 @@
+### AUTHORS: Alejandro and Selina (equal)
+
 import tabulate
 import pandas as pd
 import numpy as np
@@ -9,7 +11,7 @@ import numpy as np
 def print_head(df:pd.core.frame.DataFrame,n:int=5) -> None:
   print(tabulate.tabulate(df.head(n) , headers='keys', tablefmt='psql'))
 
-  
+### AUTHORS: from DRKG, modularized by Alejandro
 def get_triplets(drkg_file:str = 'drkg.tsv',verbose:bool=False) -> list:
   """ Read drkg.tsv file and return triplets """
 
@@ -27,7 +29,7 @@ def get_triplets(drkg_file:str = 'drkg.tsv',verbose:bool=False) -> list:
 
 
 
-
+### AUTHORS: Alejandro
 def  read_tsv(relation_file:str,verbose:bool=False):
   """ Read glossary """ 
   df = pd.read_csv(relation_file, sep="\t",engine="pyarrow")

@@ -1,3 +1,5 @@
+# AUTHORS: Selina (except the print_head function by Alejandro)
+
 import pandas as pd
 import numpy as np
 import tabulate
