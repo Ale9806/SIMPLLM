@@ -53,7 +53,8 @@ def process_hetionet(df, verbose=False):
 
 
 def read_and_process_gene_ID(relation_file, verbose=False):
-  """  
+  """
+  Written by Alex Loia 
   Process Gene ID lookup table in the following ways:
   - Filter to type = symbol (exclude synonym duplicates)
   - Add "Gene::" in front of Gene ID to match DRKG format
