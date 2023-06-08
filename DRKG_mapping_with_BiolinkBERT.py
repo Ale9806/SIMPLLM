@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# DRKG
-# 
-# Adapted from: https://github.com/gnn4dr/DRKG/blob/master/drkg_with_dgl/loading_drkg_in_dgl.ipynb
+# AUTHORS: Adapted from DRKG_mapping_with_BiolinkBERT (primary authors Alejandro and Selina) with minor edits by Rohan to run on Google Cloud cluster and save outputs
 
 # In[1]:
 

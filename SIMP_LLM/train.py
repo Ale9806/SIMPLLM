@@ -1,3 +1,5 @@
+# AUTHORS: Alejandro
+
 def forward_pass(model, link_predictor,data,return_node_emb:bool=False,prediction_entites:tuple=("compounds","disease")):
     ## If model is provided get GNN embeddings ##
     if model !=  None:                                        # If model is provided, embedd

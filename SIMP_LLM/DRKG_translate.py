@@ -1,3 +1,6 @@
+
+### AUTHORS: Selina primary, Alejandro and Alex where specified
+
 import tabulate
 import pandas as pd
 import chembl_downloader
@@ -7,14 +10,14 @@ import sys
 
 
 ########## Lookup Table Processing Functions ###################
-
+# AUTHORS: Alejandro
 def print_head(df:pd.core.frame.DataFrame,n:int=5) -> None:
   print(tabulate.tabulate(df.head(n) , headers='keys', tablefmt='psql'))
 
   
 
 
-
+# AUTHORS: Alejandro
 def  read_tsv(relation_file:str,verbose:bool=False, **kwargs):
   """ Read glossary """ 
   df = pd.read_csv(relation_file, sep="\t",engine="pyarrow", **kwargs)
@@ -27,7 +30,7 @@ def  read_tsv(relation_file:str,verbose:bool=False, **kwargs):
 
 
 
-
+# AUTHORS: Selina, modularized by Alejandro
 def process_hetionet(df, verbose=False):
   """  
   Process entity names in Hetionet lookup table for clarity in the following ways:
@@ -52,6 +55,7 @@ def process_hetionet(df, verbose=False):
   return df_updated
 
 
+# AUTHORS: Selina, one line edit by Alex to correct variable name for new source file
 def read_and_process_gene_ID(relation_file, verbose=False):
   """
   Written by Alex Loia 
@@ -74,6 +78,7 @@ def read_and_process_gene_ID(relation_file, verbose=False):
   return df_updated
 
 
+# AUTHORS: Selina
 def read_and_process_drugbank(relation_file, verbose=False):
   """  
   Process DrugBank lookup table in the following ways:
@@ -95,6 +100,7 @@ def read_and_process_drugbank(relation_file, verbose=False):
   return df_updated
 
 
+# AUTHORS: Selina
 def read_and_process_omim(relation_file, verbose=False):
   """  
   Process OMIM lookup table in the following ways:
@@ -120,6 +126,7 @@ def read_and_process_omim(relation_file, verbose=False):
 
 
 
+# AUTHORS: Selina, Adapted from: https://code.tutsplus.com/tutorials/working-with-mesh-files-in-python-linking-terms-and-numbers--cms-28587b
 def create_mesh_dict(relation_files=['c2023.bin', 'd2023.bin'], verbose=False):
   """  
   Process MeSH terms
@@ -157,6 +164,7 @@ def create_mesh_dict(relation_files=['c2023.bin', 'd2023.bin'], verbose=False):
 
   return mesh_ids
 
+# AUTHORS: Selina
 def download_chembl():
   # Import ChEMBL data
   sql = """
@@ -173,6 +181,7 @@ def download_chembl():
 
 
 
+# AUTHORS: Selina
 def process_chebi_chembl(chebi_file, chembl_df_raw, verbose=False): 
   """  
   Process and download ChEBI and ChEMBL lookup tables
@@ -197,7 +206,7 @@ def process_chebi_chembl(chebi_file, chembl_df_raw, verbose=False):
 
 
 
-
+# AUTHORS: Alejandro created this modularized code, Selina found file names, Alex updated gene_df file name
 def load_lookups(data_path,verbose=False):
     hetionet_df_raw   =  read_tsv(os.path.join(data_path,'hetionet-v1.0-nodes.tsv'),verbose=verbose)    # Read relationship mapping
     hetionet_df       =  process_hetionet(df=hetionet_df_raw, verbose=verbose)    # Process entity names for clarity (e.g., F8 -> Gene F8) 

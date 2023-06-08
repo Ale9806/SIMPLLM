@@ -1,3 +1,5 @@
+### AUTHORS: Alejandro, Selina, and Rohan; authorship listed by function
+
 import torch 
 import pandas as pd 
 import numpy as np
@@ -6,6 +8,7 @@ import torch_geometric.transforms as T
 import csv
 import torch.nn as nn
 
+# AUTHORS: Alejandro
 def create_mapping(entity_list: list, encoder=None, batch_size=64, device=None) -> dict:
     """
     Arguments:
@@ -54,6 +57,7 @@ def create_mapping(entity_list: list, encoder=None, batch_size=64, device=None) 
     return  encoded_entities.to("cpu"), mapping
 
 
+# AUTHORS: Selina and Alejandro - although not used
 def embed_nodes(df, encoders=None, **kwargs):
     '''
     Embeds values of dataframe and creates mapping using specified encoder.
@@ -71,6 +75,7 @@ def embed_nodes(df, encoders=None, **kwargs):
 
 
 
+# AUTHORS: Alejandro
 def create_edges(df, src_index_col, src_mapping, dst_index_col, dst_mapping,edge_attr=None):
     '''
     Creates index matrix and edge attribute
@@ -86,6 +91,7 @@ def create_edges(df, src_index_col, src_mapping, dst_index_col, dst_mapping,edge
     return edge_index,edge_attr
         
 
+# AUTHORS: Selina, with one line torch.save edit by Rohan and Alejandro
 def embed_entities(entity_df, graph_obj, encoder, device):
     '''Embeds entities, inputs embeddings directly into Heterograph object, and returns mapping dictionary (which is a dictionary of dictionaries) by entity type'''
     
@@ -103,6 +109,7 @@ def embed_entities(entity_df, graph_obj, encoder, device):
     return mapping_dict
 
 
+# AUTHORS: Selina primary, with file save (torch.save) and save to CPU edits by Rohan and Alejandro
 def embed_edges(hrt_data, relation_lookup, graph_obj, mapping_dict, encoder, device):
     '''
     Given dataframe with columns for head-relationship-tail (h,r,t) in that order, create edges in Heterograph object by relationship type.
@@ -168,6 +175,8 @@ def embed_edges(hrt_data, relation_lookup, graph_obj, mapping_dict, encoder, dev
 
     return relation_X, relation_mapping
 
+
+# AUTHORS: Rohan, with correction by Selina and Alejandro for undirected graph
 import pdb
 def load_graph(triplets,path="data2",random_embeddings:bool = False):
     """
@@ -207,6 +216,7 @@ def load_graph(triplets,path="data2",random_embeddings:bool = False):
 
     
 
+# AUTHORS: Alejandro
 def load_csv_as_list(file_path):
     data = []
     set_ = set()
