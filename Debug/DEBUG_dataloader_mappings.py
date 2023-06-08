@@ -1,3 +1,5 @@
+### AUTHORS: This is just a copy of dataloader_mappings.py for testing purposes (by Selina and Alejandro)
+
 import torch 
 import pandas as pd 
 import numpy as np
